@@ -32,6 +32,9 @@ coverage/
 # Logs
 *.log
 
+# Google Cloud から落とす OAuth の認証情報（絶対にコミットしない）
+client_secret*.json
+
 # Environment variables
 .env
 .env.local

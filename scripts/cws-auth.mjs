@@ -8,25 +8,83 @@
 // チャットや外部サービスに貼らないでください。
 
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
 import { exec } from 'child_process';
 
-const CLIENT_ID = process.env.CWS_CLIENT_ID;
-const CLIENT_SECRET = process.env.CWS_CLIENT_SECRET;
 const PORT = 8123;
 const REDIRECT = `http://localhost:${PORT}`;
 const SCOPE = 'https://www.googleapis.com/auth/chromewebstore';
 
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error(`環境変数が足りません。
+/**
+ * 認証情報を読む。
+ * Google Cloud Console から落とせる JSON をそのまま渡せるようにしてある。
+ * シークレットを手で写したり、シェルの履歴に残したりしなくて済む。
+ */
+function loadCredentials() {
+  const file = process.argv[2];
 
-  CWS_CLIENT_ID=xxx CWS_CLIENT_SECRET=yyy node scripts/cws-auth.mjs
+  if (file) {
+    const full = path.resolve(file);
+    if (!fs.existsSync(full)) {
+      console.error(`ファイルが見つかりません: ${full}`);
+      process.exit(1);
+    }
+    let json;
+    try {
+      json = JSON.parse(fs.readFileSync(full, 'utf8'));
+    } catch {
+      console.error(`JSON として読めませんでした: ${full}`);
+      process.exit(1);
+    }
+    // ダウンロードした JSON は web か installed のどちらかに入っている
+    const c = json.web || json.installed || json;
+    if (!c.client_id || !c.client_secret) {
+      console.error(
+        `この JSON には client_id / client_secret が入っていません。\n` +
+        `Google Cloud Console の「認証情報」で、OAuth 2.0 クライアント ID の行にある\n` +
+        `ダウンロードボタンから落とした JSON を指定してください。`
+      );
+      process.exit(1);
+    }
 
-Google Cloud Console で「OAuth クライアント ID」を
-種類「ウェブ アプリケーション」で作り、
+    const uris = c.redirect_uris || [];
+    if (uris.length && !uris.includes(REDIRECT)) {
+      console.warn(
+        `\n注意: 承認済みリダイレクト URI に ${REDIRECT} が登録されていません。\n` +
+        `      登録済み: ${uris.join(', ') || '（なし）'}\n` +
+        `      このまま進めると redirect_uri_mismatch で失敗します。\n`
+      );
+    }
+    console.log(`認証情報を読み込みました: ${path.basename(full)}`);
+    return { id: c.client_id, secret: c.client_secret };
+  }
+
+  if (process.env.CWS_CLIENT_ID && process.env.CWS_CLIENT_SECRET) {
+    return { id: process.env.CWS_CLIENT_ID, secret: process.env.CWS_CLIENT_SECRET };
+  }
+
+  console.error(`認証情報がありません。次のどちらかで渡してください。
+
+  1) Google Cloud Console から落とした JSON をそのまま渡す（おすすめ）
+     npm run cws:auth -- ~/Downloads/client_secret_xxxxx.json
+
+  2) 環境変数で渡す
+     CWS_CLIENT_ID=xxx CWS_CLIENT_SECRET=yyy npm run cws:auth
+
+クライアント シークレットが分からない場合:
+  Google Cloud Console →「APIs とサービス」→「認証情報」
+  →「OAuth 2.0 クライアント ID」の一覧で、作ったクライアントの行の
+    ダウンロードボタン（↓）を押すと JSON が落ちます。
+    クライアント名をクリックすると、画面右側にも表示されます。
+
+種類は「ウェブ アプリケーション」、
 承認済みリダイレクト URI に ${REDIRECT} を登録してください。
 詳しい手順は docs/RELEASE.md にあります。`);
   process.exit(1);
 }
+
+const { id: CLIENT_ID, secret: CLIENT_SECRET } = loadCredentials();
 
 const authUrl =
   'https://accounts.google.com/o/oauth2/auth?' +
