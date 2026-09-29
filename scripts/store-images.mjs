@@ -230,8 +230,9 @@ function compose({ headline, sub, raw, region, dark }) {
   const bg = dark
     ? 'linear-gradient(160deg, #0d1117 0%, #161b22 100%)'
     : 'linear-gradient(160deg, #eef3f9 0%, #e3ebf5 100%)';
-  const chipBg = dark ? 'rgba(255,255,255,.08)' : 'rgba(9,105,218,.09)';
-  const chipInk = dark ? '#9198a1' : '#0969da';
+  // アイコンを白黒にしたので、掲載画像の差し色も白黒に寄せる
+  const chipBg = dark ? 'rgba(255,255,255,.10)' : 'rgba(36,41,47,.07)';
+  const chipInk = dark ? '#c9d1d9' : '#24292f';
 
   return `<!doctype html><meta charset="utf-8"><style>
   * { margin:0; padding:0; box-sizing:border-box; }

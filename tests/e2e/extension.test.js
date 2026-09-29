@@ -177,3 +177,73 @@ test('ツールチップが画面外にはみ出さない', async () => {
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(width);
 });
+
+// ============================================================
+// Issue を新しく書く画面の案内パネル
+// ============================================================
+
+const NEW_ISSUE = `file://${path.resolve(ROOT, 'tests', 'fixtures', 'issues', 'new', 'index.html')}`;
+
+test.describe('Issue の依頼支援', () => {
+  test.beforeEach(async () => {
+    await page.goto(NEW_ISSUE);
+    await page.addStyleTag({ path: STYLES_CSS });
+    await page.addScriptTag({ path: CONTENT_JS });
+    await page.waitForSelector('#ghja-issue-helper', { timeout: 5000 });
+  });
+
+  test('案内パネルがフォームの前に差し込まれる', async () => {
+    const panel = page.locator('#ghja-issue-helper');
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('h2')).toHaveText('伝わる依頼の書き方');
+    // フォームより前にあること
+    const order = await page.evaluate(() => {
+      const p = document.getElementById('ghja-issue-helper');
+      const f = document.getElementById('issue-form');
+      return p.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_FOLLOWING ? 'before' : 'after';
+    });
+    expect(order).toBe('before');
+  });
+
+  test('書き方の要点が並んでいる', async () => {
+    const items = page.locator('#ghja-issue-helper .ghja-panel__list li');
+    await expect(items).toHaveCount(4);
+    await expect(items.first()).toContainText('何が起きたか');
+  });
+
+  test('雛形のボタンが 3 種類ある', async () => {
+    const buttons = page.locator('#ghja-issue-helper .ghja-panel__btn');
+    await expect(buttons).toHaveCount(3);
+    await expect(buttons.nth(0)).toHaveText('うまく動かない（バグ報告）');
+  });
+
+  test('雛形が本文に入る', async () => {
+    await page.locator('#ghja-issue-helper .ghja-panel__btn').first().click();
+    const body = await page.locator('textarea[name="issue[body]"]').inputValue();
+    expect(body).toContain('## 何が起きたか');
+    expect(body).toContain('## どうなってほしいか');
+    expect(body).toContain('## 手順');
+  });
+
+  test('すでに書いた内容を消さない', async () => {
+    await page.fill('textarea[name="issue[body]"]', '先に書いたメモ');
+    await page.locator('#ghja-issue-helper .ghja-panel__btn').nth(1).click();
+    const body = await page.locator('textarea[name="issue[body]"]').inputValue();
+    expect(body).toContain('先に書いたメモ');
+    expect(body).toContain('## 困っていること');
+  });
+
+  test('挿入後にボタンの表示が戻る', async () => {
+    const button = page.locator('#ghja-issue-helper .ghja-panel__btn').first();
+    await button.click();
+    await expect(button).toHaveText('本文に入れました');
+    await expect(button).toHaveText('うまく動かない（バグ報告）', { timeout: 4000 });
+  });
+
+  test('Issue 以外の画面にはパネルを出さない', async () => {
+    await page.goto(FIXTURE);
+    await page.addScriptTag({ path: CONTENT_JS });
+    await page.waitForTimeout(800);
+    await expect(page.locator('#ghja-issue-helper')).toHaveCount(0);
+  });
+});

@@ -11,6 +11,9 @@ export default [
         document: 'readonly',
         window: 'readonly',
         MutationObserver: 'readonly',
+        navigator: 'readonly',
+        location: 'readonly',
+        Event: 'readonly',
         Node: 'readonly',
         NodeFilter: 'readonly',
         setTimeout: 'readonly',
@@ -32,6 +35,6 @@ export default [
     },
   },
   {
-    ignores: ['content.js', 'node_modules/', 'test-results/', 'coverage/', 'playwright-report/'],
+    ignores: ['content.js', 'guide.bundle.js', 'node_modules/', 'test-results/', 'coverage/', 'playwright-report/'],
   },
 ];

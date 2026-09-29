@@ -1,4 +1,5 @@
-import { annotate, setupMutationObserver, stopMutationObserver, removeAllAnnotations, setOptions } from './dom.js';
+import { annotate, setupMutationObserver, stopMutationObserver, removeAllAnnotations, setOptions, onDomSettled } from './dom.js';
+import { syncIssueHelper } from './issue-helper.js';
 import { DEFAULTS, loadSettings, onSettingsChanged, isExcludedPath } from './settings.js';
 
 let settings = { ...DEFAULTS };
@@ -13,6 +14,9 @@ function start() {
   running = true;
   setOptions(settings);
   annotate(document.body);
+  syncIssueHelper(true);
+  // GitHub は画面を差し替えるので、そのたびに置き直す
+  onDomSettled(() => syncIssueHelper(running));
   setupMutationObserver();
 }
 
@@ -21,6 +25,7 @@ function stop() {
   running = false;
   stopMutationObserver();
   removeAllAnnotations();
+  syncIssueHelper(false);
 }
 
 function sync() {

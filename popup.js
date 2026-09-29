@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     flash('表示のしかたを変えました');
   });
 
+  document.getElementById('openGuide').addEventListener('click', () => {
+    chrome.tabs
+      ? chrome.tabs.create({ url: chrome.runtime.getURL('guide.html') })
+      : window.open(chrome.runtime.getURL('guide.html'), '_blank');
+  });
+
   document.getElementById('openOptions').addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
   });

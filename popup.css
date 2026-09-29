@@ -136,3 +136,5 @@ body {
 }
 
 .btn:hover { background: #eef1f4; }
+
+.btn--wide { margin-bottom: 8px; }

@@ -18,6 +18,12 @@ let options = { ...DEFAULTS };
 let observer = null;
 let pendingScan = null;
 let sharedTooltip = null;
+const settledListeners = [];
+
+/** MutationObserver の処理が一巡したあとに呼ばれる。SPA 遷移の検知に使う */
+export function onDomSettled(callback) {
+  settledListeners.push(callback);
+}
 
 export function setOptions(patch) {
   options = { ...options, ...patch };
@@ -188,6 +194,7 @@ export function setupMutationObserver() {
       for (const root of roots) {
         if (root.isConnected) annotate(root);
       }
+      for (const listener of settledListeners) listener();
     }, 100);
   });
 
@@ -199,6 +206,7 @@ export function stopMutationObserver() {
   observer.disconnect();
   observer = null;
   clearTimeout(pendingScan);
+  settledListeners.length = 0;
 }
 
 export function removeAllAnnotations() {

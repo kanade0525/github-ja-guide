@@ -70,3 +70,83 @@
   border-top-color: transparent;
   border-bottom-color: #24292f;
 }
+
+/* ---- Issue を新しく書く画面に差し込む案内 ---- */
+
+.ghja-panel {
+  margin: 0 0 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--borderColor-default, var(--color-border-default, #d1d9e0));
+  /* 製品の色は白黒に寄せているので、差し色は使わず濃いめの罫線にする */
+  border-left: 3px solid var(--fgColor-muted, var(--color-fg-muted, #59636e));
+  border-radius: 8px;
+  background: var(--bgColor-muted, var(--color-canvas-subtle, #f6f8fa));
+  color: var(--fgColor-default, var(--color-fg-default, #1f2328));
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.ghja-panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ghja-panel__head h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  padding: 0;
+}
+
+.ghja-panel__link {
+  font-size: 12px;
+  color: var(--fgColor-accent, var(--color-accent-fg, #0969da));
+  white-space: nowrap;
+}
+
+.ghja-panel__list {
+  margin: 0 0 12px;
+  padding-left: 1.3em;
+}
+
+.ghja-panel__list li { margin-bottom: 2px; }
+
+.ghja-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ghja-panel__label {
+  font-size: 12px;
+  color: var(--fgColor-muted, var(--color-fg-muted, #59636e));
+}
+
+.ghja-panel__btn {
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fgColor-default, var(--color-fg-default, #1f2328));
+  background: var(--bgColor-default, var(--color-canvas-default, #ffffff));
+  border: 1px solid var(--borderColor-default, var(--color-border-default, #d1d9e0));
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ghja-panel__btn:hover:not(:disabled) {
+  background: var(--bgColor-neutral-muted, #eef1f4);
+}
+
+.ghja-panel__btn:disabled { opacity: 0.7; cursor: default; }
+
+.ghja-panel__note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--fgColor-muted, var(--color-fg-muted, #59636e));
+}

@@ -1,6 +1,6 @@
 {
   "name": "github-ja-guide",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "npx playwright test",
-    "pack": "rm -f dist.zip && npm run build && zip -r dist.zip manifest.json content.js styles.css popup.html popup.js popup.css options.html options.js options.css icons/",
+    "pack": "rm -f dist.zip && npm run build && zip -r dist.zip manifest.json content.js styles.css popup.html popup.js popup.css options.html options.js options.css guide.html guide.css guide.bundle.js icons/",
     "version": "node scripts/set-version.mjs",
     "icons": "node scripts/generate-icons.js",
     "cws:auth": "node scripts/cws-auth.mjs",

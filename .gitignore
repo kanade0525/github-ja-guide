@@ -19,6 +19,7 @@ build/
 
 # Rollup build output (source is in src/)
 /content.js
+/guide.bundle.js
 
 # 生成物（npm run screenshots / npm run pack で作り直せる）
 store-assets/
