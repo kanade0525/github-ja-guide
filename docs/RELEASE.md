@@ -79,7 +79,28 @@ npm run cws:auth
 
 ### 4. GitHub に登録する
 
-リポジトリの Settings → Secrets and variables → Actions で、次の 4 つを登録します。
+**コマンドで登録するのが簡単で安全です。** 値は画面にもシェルの履歴にも残りません。
+
+```bash
+# 取得と同時に登録する（CWS_CLIENT_ID と CWS_REFRESH_TOKEN が入ります）
+npm run cws:auth -- ~/Downloads/client_secret_xxxxx.json --save
+
+# 拡張機能 ID はストアに初回アップロードしてから
+gh secret set CWS_EXTENSION_ID
+
+# 確認
+gh secret list
+```
+
+`gh secret set` は引数を付けずに実行すると、その場で入力を求められます。
+入力した文字は画面に表示されません。
+
+<details>
+<summary>画面から登録する場合</summary>
+
+リポジトリの Settings → Secrets and variables → Actions で、次を登録します。
+</details>
+
 
 | 名前 | 中身 | 必須 |
 |---|---|---|

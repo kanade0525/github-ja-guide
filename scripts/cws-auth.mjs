@@ -11,7 +11,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { exec } from 'child_process';
+import { exec, spawnSync } from 'child_process';
 
 const PORT = 8123;
 const REDIRECT = `http://localhost:${PORT}`;
@@ -22,8 +22,31 @@ const SCOPE = 'https://www.googleapis.com/auth/chromewebstore';
  * Google Cloud Console から落とせる JSON をそのまま渡せるようにしてある。
  * シークレットを手で写したり、シェルの履歴に残したりしなくて済む。
  */
+const SAVE_TO_GITHUB = process.argv.includes('--save');
+
+/**
+ * 取得したトークンを GitHub の Secrets に直接登録する。
+ * 値は gh の標準入力に渡すので、画面にもシェルの履歴にも残らない。
+ */
+function saveSecret(name, value) {
+  const gh = spawnSync('gh', ['secret', 'set', name], {
+    input: value,
+    encoding: 'utf8',
+  });
+  if (gh.error) {
+    console.error(`  ${name}: gh コマンドが見つかりません（${gh.error.message}）`);
+    return false;
+  }
+  if (gh.status !== 0) {
+    console.error(`  ${name}: 登録に失敗しました\n${(gh.stderr || '').trim()}`);
+    return false;
+  }
+  console.log(`  ${name}: 登録しました`);
+  return true;
+}
+
 function loadCredentials() {
-  const file = process.argv[2];
+  const file = process.argv.find((a, i) => i >= 2 && !a.startsWith('--'));
 
   if (file) {
     const full = path.resolve(file);
@@ -150,10 +173,40 @@ if (!json.refresh_token) {
   process.exit(1);
 }
 
+if (SAVE_TO_GITHUB) {
+  console.log('\nGitHub の Secrets に登録します...');
+  const ok =
+    saveSecret('CWS_CLIENT_ID', CLIENT_ID) & saveSecret('CWS_REFRESH_TOKEN', json.refresh_token);
+  if (CLIENT_SECRET) saveSecret('CWS_CLIENT_SECRET', CLIENT_SECRET);
+
+  if (ok) {
+    console.log(`
+残りは拡張機能 ID だけです。ストアに初回アップロードすると発行されます。
+
+  gh secret set CWS_EXTENSION_ID
+
+  （実行するとその場で入力を求められます。画面には表示されません）
+
+登録済みの一覧: gh secret list`);
+    process.exit(0);
+  }
+  console.error('\n登録に失敗したので、下の値を手で登録してください。');
+}
+
 console.log('\n=============================================');
 console.log('CWS_REFRESH_TOKEN=' + json.refresh_token);
 console.log('=============================================\n');
-console.log(`GitHub の Settings → Secrets and variables → Actions に登録してください。
+console.log(`GitHub に登録するには、次のどちらかで。
+
+  コマンドで登録する（値は画面に出ません）
+    gh secret set CWS_CLIENT_ID
+    gh secret set CWS_REFRESH_TOKEN
+    gh secret set CWS_EXTENSION_ID
+
+  次回からは --save を付ければ、取得と同時に登録されます
+    npm run cws:auth -- <JSONのパス> --save
+
+画面から登録する場合は Settings → Secrets and variables → Actions。
 
   CWS_CLIENT_ID     ${CLIENT_ID}
   CWS_REFRESH_TOKEN 上の値
