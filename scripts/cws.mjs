@@ -106,6 +106,28 @@ async function upload() {
 
   if (json.uploadState !== 'SUCCESS') {
     const details = (json.itemError || []).map((e) => `  - ${e.error_detail}`).join('\n');
+    const all = (json.itemError || []).map((e) => e.error_detail).join(' ');
+
+    // よくある状況は、原文のままだと何をすればよいか分からないので言い換える
+    if (/pending review|ready to publish/i.test(all)) {
+      fail(
+        `いま審査中のため、差し替えられません。\n\n` +
+        `  Chrome ウェブストアは、審査待ちの間は新しい版を受け付けません。\n\n` +
+        `  どちらかを選んでください:\n` +
+        `    1. 審査が終わるのを待ってから、もう一度アップロードする\n` +
+        `    2. ダッシュボードで申請を取り下げてから、アップロードし直す\n` +
+        `       （公開前の版を差し替えたいときはこちら）\n\n` +
+        `  ダッシュボード: https://chrome.google.com/webstore/devconsole/\n\n` +
+        `  ストアからの応答:\n${details}`
+      );
+    }
+    if (/version/i.test(all) && /already exists|greater/i.test(all)) {
+      fail(
+        `同じバージョン番号は受け付けられません。\n\n` +
+        `  npm run version 0.2.1  で番号を上げてから、もう一度実行してください。\n\n` +
+        `  ストアからの応答:\n${details}`
+      );
+    }
     fail(`アップロードに失敗しました（${json.uploadState}）\n${details}`);
   }
 
