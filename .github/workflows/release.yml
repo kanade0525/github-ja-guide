@@ -13,7 +13,7 @@ on:
         required: true
         default: upload
         type: choice
-        options: [upload, publish-testers, publish]
+        options: [status, upload, publish-testers, publish]
       confirm:
         description: publish を選んだ場合のみ、PUBLISH と入力してください
         required: false
@@ -23,8 +23,26 @@ permissions:
   contents: write
 
 jobs:
+  cws-status:
+    name: ストアの状態を確認（読み取りのみ）
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'status'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 状態を取得
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: node scripts/cws.mjs status
+
   verify:
     name: 検証
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action != 'status'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +89,9 @@ jobs:
   cws-upload:
     name: ストアに下書きとしてアップロード
     needs: verify
-    if: github.ref_type == 'tag' || github.event.inputs.action != ''
+    if: >-
+      github.ref_type == 'tag' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.action != 'status')
     runs-on: ubuntu-latest
     environment: chrome-web-store
     steps:
