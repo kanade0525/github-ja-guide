@@ -57,3 +57,40 @@ describe('ストアの掲載文面', () => {
     }
   });
 });
+
+// ストアには「外部サーバーとの通信は一切ありません」と書いて審査を受ける。
+// うっかり通信コードを足したら、説明と実装が食い違ったまま公開してしまう。
+describe('外部送信なしの保証', () => {
+  const SHIPPED = [
+    'src/content.js',
+    'src/dom.js',
+    'src/glossary.js',
+    'src/match.js',
+    'src/settings.js',
+    'popup.js',
+    'options.js',
+  ];
+
+  const FORBIDDEN = [
+    [/\bfetch\s*\(/, 'fetch'],
+    [/XMLHttpRequest/, 'XMLHttpRequest'],
+    [/\bWebSocket\b/, 'WebSocket'],
+    [/sendBeacon/, 'navigator.sendBeacon'],
+    [/\beval\s*\(/, 'eval'],
+    [/new\s+Function\s*\(/, 'new Function'],
+    [/import\s*\(/, '動的 import'],
+  ];
+
+  it.each(SHIPPED)('%s に通信・動的コード実行が含まれない', (file) => {
+    const code = read(file);
+    for (const [pattern, label] of FORBIDDEN) {
+      expect(pattern.test(code), `${file} に ${label} が含まれている`).toBe(false);
+    }
+  });
+
+  it('配布物に scripts/ を含めない（cws.mjs は fetch を使うため）', () => {
+    const pkg = JSON.parse(read('package.json'));
+    expect(pkg.scripts.pack).not.toContain('scripts/');
+    expect(pkg.scripts.pack).not.toContain('src/');
+  });
+});
