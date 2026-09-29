@@ -1,5 +1,9 @@
 # GitHub やさしく日本語
 
+[![CI](https://github.com/kanade0525/github-ja-guide/actions/workflows/ci.yml/badge.svg)](https://github.com/kanade0525/github-ja-guide/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/kanade0525/github-ja-guide)](https://github.com/kanade0525/github-ja-guide/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 GitHub の画面に出る英語のラベルはそのまま残して、**横に小さく日本語の意味**を添える Chrome 拡張機能です。
 
 ```
@@ -22,10 +26,16 @@ GitHub の画面に出る英語のラベルはそのまま残して、**横に�
 - **本文やコードには手を出しません。** 注釈が付くのはナビやボタンなどの UI ラベルだけ。Issue の本文中に出てくる "fork" や、コードブロックの中の `merge` はそのままです
 - **画面が切り替わっても追従します。** GitHub はページを再読み込みせず中身を差し替えるため、その変化を監視して付け直します
 
-## インストール（開発版）
+## インストール
+
+### ビルド済みを使う（かんたん）
+
+[最新リリース](https://github.com/kanade0525/github-ja-guide/releases/latest)から `dist.zip` をダウンロードして展開し、下の 1〜4 を行ってください。
+
+### ソースからビルドする
 
 ```bash
-git clone <このリポジトリ>
+git clone https://github.com/kanade0525/github-ja-guide.git
 cd github-ja-guide
 npm ci
 npm run build
@@ -35,6 +45,8 @@ npm run build
 2. 右上の「デベロッパーモード」をオンにする
 3. 「パッケージ化されていない拡張機能を読み込む」で、このフォルダを選ぶ
 4. GitHub のページを開き直す
+
+> Chrome ウェブストアでの公開は準備中です。
 
 ## 設定
 
