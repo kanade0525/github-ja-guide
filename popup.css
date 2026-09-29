@@ -31,7 +31,11 @@ body {
   flex-shrink: 0;
 }
 
-.icon--brand { fill: #0969da; }
+.icon--brand {
+  /* 製品マーク（ドット絵）。拡大縮小でにじませない */
+  border-radius: 4px;
+  image-rendering: pixelated;
+}
 
 .row {
   display: flex;

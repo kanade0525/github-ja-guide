@@ -42,6 +42,16 @@ describe('manifest.json', () => {
     }
   });
 
+  it('アイコンが宣言どおりの寸法で書き出されている', () => {
+    // ドット絵は 16x16 を 1/3/8 倍で拡大する。寸法がずれると絵が崩れる
+    for (const size of ['16', '48', '128']) {
+      const buf = fs.readFileSync(path.join(root, manifest.icons[size]));
+      expect(buf.readUInt32BE(16), `icon-${size}.png の幅`).toBe(Number(size));
+      expect(buf.readUInt32BE(20), `icon-${size}.png の高さ`).toBe(Number(size));
+      expect(Number(size) % 16, `${size} は 16 で割り切れる必要がある`).toBe(0);
+    }
+  });
+
   it('ポップアップと設定ページが実在する', () => {
     expect(fs.existsSync(path.join(root, manifest.action.default_popup))).toBe(true);
     expect(fs.existsSync(path.join(root, manifest.options_ui.page))).toBe(true);
