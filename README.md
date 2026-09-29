@@ -6,13 +6,11 @@
 
 GitHub の画面に出る英語のラベルはそのまま残して、**横に小さく日本語の意味**を添える Chrome 拡張機能です。
 
-```
-[ Pull requests 変更の取り込み依頼 ]   [ Issues 課題・要望 ]   [ Fork 自分用にコピー ]
-```
+![タブやボタンに日本語が添えられている様子](docs/images/labels.png)
 
 マウスを乗せると、その用語が何なのかの説明が出ます。
 
-> Fork — 他の人のプロジェクトを自分のアカウントに丸ごと複製します。元には影響しません。
+![Pull requests にマウスを乗せると説明が出る](docs/images/tooltip.png)
 
 ## なぜ英語を消さないのか
 
@@ -31,9 +29,13 @@ GitHub の画面に出る英語のラベルはそのまま残して、**横に�
 
 ツールバーのアイコンから「考え方ガイドを読む」で開けます。
 
+![考え方ガイド](docs/images/guide.png)
+
 ### Issue を書く画面での手助け
 
 `/issues/new` を開くと、書く欄のすぐ上に要点と雛形が出ます。
+
+![Issue を書く画面に出る案内](docs/images/issue-helper.png)
 
 - 「何が起きたか」と「どうなってほしいか」を分けて書く、などの要点
 - バグ報告 / 要望 / 質問 の雛形をボタン 1 つで本文に入れられる（すでに書いた内容は消しません）
@@ -71,6 +73,9 @@ npm run build
 ## 設定
 
 ツールバーのアイコンから切り替えられます。
+
+<img src="docs/images/popup.png" alt="ツールバーのポップアップ" width="300">
+
 
 | 場所 | できること |
 |---|---|
@@ -110,7 +115,8 @@ src/settings.js             設定の読み書き
 src/content.js              エントリポイント
 
 scripts/generate-icons.js   アイコン PNG の生成
-scripts/screenshots.mjs     ストア提出用スクリーンショットの生成
+scripts/store-images.mjs    ストア提出用スクリーンショットの生成
+scripts/readme-images.mjs   README 用の画像の生成
 scripts/set-version.mjs     package.json と manifest.json のバージョンを揃える
 scripts/cws.mjs             Chrome ウェブストア API（状態確認・アップロード・公開）
 scripts/cws-auth.mjs        リフレッシュトークンの取得（手元で完結）
@@ -131,6 +137,7 @@ npm test               # ユニットテスト（Vitest）
 npm run test:e2e       # E2E（Playwright・ローカルの模擬ページに対して）
 npm run icons          # アイコン PNG を作り直す
 npm run screenshots    # ストア用スクリーンショット（実 github.com を開く）
+npm run images         # README 用の画像を docs/images/ に作り直す
 npm run pack           # ストア提出用の dist.zip を作る
 ```
 

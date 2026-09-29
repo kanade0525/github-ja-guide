@@ -16,7 +16,8 @@
     "cws:auth": "node scripts/cws-auth.mjs",
     "cws:status": "node scripts/cws.mjs status",
     "cws:upload": "node scripts/cws.mjs upload",
-    "screenshots": "node scripts/store-images.mjs"
+    "screenshots": "node scripts/store-images.mjs",
+    "images": "node scripts/readme-images.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -129,3 +129,29 @@ describe('拡張機能名の表記', () => {
     }
   });
 });
+
+// README に貼った画像のリンク切れは、リポジトリを開いた人に最初に見える不具合になる。
+describe('README の画像', () => {
+  const readme = read('README.md');
+  const refs = [
+    ...[...readme.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map((m) => m[1]),
+    ...[...readme.matchAll(/<img[^>]+src="([^"]+)"/g)].map((m) => m[1]),
+  ].filter((p) => !p.startsWith('http'));
+
+  it('画像を貼っている', () => {
+    expect(refs.length).toBeGreaterThan(0);
+  });
+
+  it.each([...new Set(refs)])('%s が実在する', (ref) => {
+    expect(fs.existsSync(path.join(root, ref)), `${ref} が見つからない`).toBe(true);
+  });
+
+  it('貼った画像がすべて PNG として壊れていない', () => {
+    for (const ref of new Set(refs)) {
+      const buf = fs.readFileSync(path.join(root, ref));
+      // PNG のシグネチャ
+      expect(buf.subarray(0, 8).toString('hex'), `${ref}`).toBe('89504e470d0a1a0a');
+      expect(buf.readUInt32BE(16), `${ref} の幅`).toBeGreaterThan(0);
+    }
+  });
+});
