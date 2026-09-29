@@ -94,3 +94,38 @@ describe('外部送信なしの保証', () => {
     expect(pkg.scripts.pack).not.toContain('src/');
   });
 });
+
+// 拡張機能名は manifest・README・プライバシーポリシー・提出ガイドに散らばっている。
+// 改名したときに一部だけ直し忘れると、ストアと画面で名前が食い違う。
+describe('拡張機能名の表記', () => {
+  const manifest = JSON.parse(read('manifest.json'));
+  const FULL = manifest.name;
+  const SHORT = 'GitHub 用語ガイド'; // 画面内で使う短い呼称
+
+  it('正式名に短い呼称が含まれている', () => {
+    expect(FULL).toContain(SHORT);
+  });
+
+  it.each(['README.md', 'PRIVACY_POLICY.md', 'SUBMISSION_GUIDE.md'])(
+    '%s が manifest と同じ正式名を使っている',
+    (file) => {
+      expect(read(file), `${file} に「${FULL}」が無い`).toContain(FULL);
+    }
+  );
+
+  it.each(['popup.html', 'options.html'])('%s が短い呼称を使っている', (file) => {
+    expect(read(file)).toContain(SHORT);
+  });
+
+  it('旧名が残っていない', () => {
+    for (const file of ['manifest.json', 'README.md', 'PRIVACY_POLICY.md', 'SUBMISSION_GUIDE.md', 'popup.html', 'options.html']) {
+      expect(read(file), `${file} に旧名が残っている`).not.toContain('やさしく日本語');
+    }
+  });
+
+  it('商標の表記が GitHub で揃っている（Github ではない）', () => {
+    for (const file of ['manifest.json', 'README.md', 'PRIVACY_POLICY.md', 'SUBMISSION_GUIDE.md', 'popup.html', 'options.html']) {
+      expect(read(file), `${file} に誤表記 Github がある`).not.toMatch(/Github/);
+    }
+  });
+});

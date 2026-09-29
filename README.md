@@ -1,4 +1,4 @@
-# GitHub やさしく日本語
+# 非エンジニアのための GitHub 用語ガイド
 
 [![CI](https://github.com/kanade0525/github-ja-guide/actions/workflows/ci.yml/badge.svg)](https://github.com/kanade0525/github-ja-guide/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/kanade0525/github-ja-guide)](https://github.com/kanade0525/github-ja-guide/releases/latest)
