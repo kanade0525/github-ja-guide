@@ -88,7 +88,14 @@ jobs:
           CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
           CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
           CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
-        run: node scripts/cws.mjs upload
+        run: |
+          # ストアの認証情報がまだ登録されていないうちは、
+          # リリース自体を失敗させずに飛ばす（GitHub リリースは作られる）
+          if [ -z "$CWS_CLIENT_ID" ] || [ -z "$CWS_EXTENSION_ID" ]; then
+            echo "::notice title=ストアへのアップロードを飛ばしました::CWS_* の Secrets が未設定です。設定手順は docs/RELEASE.md を参照してください。"
+            exit 0
+          fi
+          node scripts/cws.mjs upload
 
   cws-publish:
     name: ストアで公開する
@@ -114,6 +121,10 @@ jobs:
           CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
           CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
         run: |
+          if [ -z "$CWS_CLIENT_ID" ] || [ -z "$CWS_EXTENSION_ID" ]; then
+            echo "CWS_* の Secrets が未設定です。docs/RELEASE.md の手順で登録してください。"
+            exit 1
+          fi
           if [ "${{ github.event.inputs.action }}" = "publish-testers" ]; then
             node scripts/cws.mjs publish --testers --yes
           else
