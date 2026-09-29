@@ -19,11 +19,13 @@ const ICONS_DIR = path.resolve(__dirname, '..', 'icons');
 const GRID = 16;
 const SIZES = [16, 48, 128];
 
+const BG = '#24292f'; // 地の色（GitHub の文字色と同じ黒）
+
 const PALETTE = {
   W: '#ffffff', // 毛
-  E: '#0b3d66', // 目（背景より濃い青）
-  N: '#ff8fa3', // 鼻
-  P: '#ffb3c1', // 耳の内側
+  E: BG,        // 目。地と同じ色で抜くと、白い顔に穴が空いて見える
+  N: '#8c959f', // 鼻
+  P: '#d0d7de', // 耳の内側
 };
 
 // 16x16。'.' は背景（青）のまま
@@ -75,7 +77,7 @@ function svg(size) {
   });
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges">
-  <rect width="${size}" height="${size}" rx="${radius}" fill="#0969da"/>
+  <rect width="${size}" height="${size}" rx="${radius}" fill="${BG}"/>
   ${cells.join('\n  ')}
 </svg>`;
 }

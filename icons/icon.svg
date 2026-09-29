@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" shape-rendering="crispEdges">
-  <rect width="128" height="128" rx="24" fill="#0969da"/>
+  <rect width="128" height="128" rx="24" fill="#24292f"/>
   <rect x="24" y="16" width="8" height="8" fill="#ffffff"/>
   <rect x="96" y="16" width="8" height="8" fill="#ffffff"/>
   <rect x="24" y="24" width="8" height="8" fill="#ffffff"/>
@@ -7,10 +7,10 @@
   <rect x="88" y="24" width="8" height="8" fill="#ffffff"/>
   <rect x="96" y="24" width="8" height="8" fill="#ffffff"/>
   <rect x="24" y="32" width="8" height="8" fill="#ffffff"/>
-  <rect x="32" y="32" width="8" height="8" fill="#ffb3c1"/>
+  <rect x="32" y="32" width="8" height="8" fill="#d0d7de"/>
   <rect x="40" y="32" width="8" height="8" fill="#ffffff"/>
   <rect x="80" y="32" width="8" height="8" fill="#ffffff"/>
-  <rect x="88" y="32" width="8" height="8" fill="#ffb3c1"/>
+  <rect x="88" y="32" width="8" height="8" fill="#d0d7de"/>
   <rect x="96" y="32" width="8" height="8" fill="#ffffff"/>
   <rect x="24" y="40" width="8" height="8" fill="#ffffff"/>
   <rect x="32" y="40" width="8" height="8" fill="#ffffff"/>
@@ -36,26 +36,26 @@
   <rect x="104" y="48" width="8" height="8" fill="#ffffff"/>
   <rect x="16" y="56" width="8" height="8" fill="#ffffff"/>
   <rect x="24" y="56" width="8" height="8" fill="#ffffff"/>
-  <rect x="32" y="56" width="8" height="8" fill="#0b3d66"/>
-  <rect x="40" y="56" width="8" height="8" fill="#0b3d66"/>
+  <rect x="32" y="56" width="8" height="8" fill="#24292f"/>
+  <rect x="40" y="56" width="8" height="8" fill="#24292f"/>
   <rect x="48" y="56" width="8" height="8" fill="#ffffff"/>
   <rect x="56" y="56" width="8" height="8" fill="#ffffff"/>
   <rect x="64" y="56" width="8" height="8" fill="#ffffff"/>
   <rect x="72" y="56" width="8" height="8" fill="#ffffff"/>
-  <rect x="80" y="56" width="8" height="8" fill="#0b3d66"/>
-  <rect x="88" y="56" width="8" height="8" fill="#0b3d66"/>
+  <rect x="80" y="56" width="8" height="8" fill="#24292f"/>
+  <rect x="88" y="56" width="8" height="8" fill="#24292f"/>
   <rect x="96" y="56" width="8" height="8" fill="#ffffff"/>
   <rect x="104" y="56" width="8" height="8" fill="#ffffff"/>
   <rect x="16" y="64" width="8" height="8" fill="#ffffff"/>
   <rect x="24" y="64" width="8" height="8" fill="#ffffff"/>
-  <rect x="32" y="64" width="8" height="8" fill="#0b3d66"/>
-  <rect x="40" y="64" width="8" height="8" fill="#0b3d66"/>
+  <rect x="32" y="64" width="8" height="8" fill="#24292f"/>
+  <rect x="40" y="64" width="8" height="8" fill="#24292f"/>
   <rect x="48" y="64" width="8" height="8" fill="#ffffff"/>
   <rect x="56" y="64" width="8" height="8" fill="#ffffff"/>
   <rect x="64" y="64" width="8" height="8" fill="#ffffff"/>
   <rect x="72" y="64" width="8" height="8" fill="#ffffff"/>
-  <rect x="80" y="64" width="8" height="8" fill="#0b3d66"/>
-  <rect x="88" y="64" width="8" height="8" fill="#0b3d66"/>
+  <rect x="80" y="64" width="8" height="8" fill="#24292f"/>
+  <rect x="88" y="64" width="8" height="8" fill="#24292f"/>
   <rect x="96" y="64" width="8" height="8" fill="#ffffff"/>
   <rect x="104" y="64" width="8" height="8" fill="#ffffff"/>
   <rect x="16" y="72" width="8" height="8" fill="#ffffff"/>
@@ -75,8 +75,8 @@
   <rect x="32" y="80" width="8" height="8" fill="#ffffff"/>
   <rect x="40" y="80" width="8" height="8" fill="#ffffff"/>
   <rect x="48" y="80" width="8" height="8" fill="#ffffff"/>
-  <rect x="56" y="80" width="8" height="8" fill="#ff8fa3"/>
-  <rect x="64" y="80" width="8" height="8" fill="#ff8fa3"/>
+  <rect x="56" y="80" width="8" height="8" fill="#8c959f"/>
+  <rect x="64" y="80" width="8" height="8" fill="#8c959f"/>
   <rect x="72" y="80" width="8" height="8" fill="#ffffff"/>
   <rect x="80" y="80" width="8" height="8" fill="#ffffff"/>
   <rect x="88" y="80" width="8" height="8" fill="#ffffff"/>
