@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "GitHub やさしく日本語",
   "version": "0.1.0",
-  "description": "GitHub の英語の用語はそのままに、横に小さく日本語の意味を添えます。外部送信なし。",
+  "description": "英語のラベルはそのままに、横に日本語の意味を添えます。Pull requests なら「変更の取り込み依頼」。208 語に対応、外部送信なし。",
   "permissions": [
     "storage"
   ],
