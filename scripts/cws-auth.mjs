@@ -14,7 +14,9 @@ import crypto from 'crypto';
 import { exec, spawnSync } from 'child_process';
 
 const PORT = 8123;
-const REDIRECT = `http://localhost:${PORT}`;
+// Google の loopback フローは 127.0.0.1 が正式な表記。
+// localhost 表記は弾かれることがある。
+const REDIRECT = `http://127.0.0.1:${PORT}`;
 const SCOPE = 'https://www.googleapis.com/auth/chromewebstore';
 
 /**
@@ -77,7 +79,13 @@ function loadCredentials() {
     const kind = json.installed ? 'デスクトップ アプリ' : 'ウェブ アプリケーション';
     console.log(`認証情報を読み込みました: ${path.basename(full)}（${kind}）`);
     if (!c.client_secret) {
-      console.log('クライアント シークレットなし → PKCE で認可します（シークレットは不要です）');
+      console.log('クライアント シークレットなし → PKCE で認可します');
+      if (json.installed) {
+        console.log(
+          '注意: Google はデスクトップ アプリ種別のループバック方式を遮断しています。' +
+          '\n      拒否された場合は「ウェブ アプリケーション」種別で作り直してください。'
+        );
+      }
     }
 
     const uris = c.redirect_uris || [];
@@ -103,9 +111,11 @@ function loadCredentials() {
   2) 環境変数で渡す
      CWS_CLIENT_ID=xxx CWS_CLIENT_SECRET=yyy npm run cws:auth
 
-種類は「デスクトップ アプリ」でも「ウェブ アプリケーション」でも構いません。
-  デスクトップ アプリ  : シークレットは発行されません。PKCE で認可するので不要です
-  ウェブ アプリケーション: 承認済みリダイレクト URI に ${REDIRECT} の登録が必要です
+種類は「**ウェブ アプリケーション**」で作ってください。
+承認済みのリダイレクト URI に ${REDIRECT} を登録します。
+
+  デスクトップ アプリ種別は使えません。
+  Google がループバック方式（127.0.0.1 に戻す方式）を遮断したためです。
 
 詳しい手順は docs/RELEASE.md にあります。`);
   process.exit(1);
@@ -118,7 +128,9 @@ const verifier = crypto.randomBytes(48).toString('base64url');
 const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
 
 const authUrl =
-  'https://accounts.google.com/o/oauth2/auth?' +
+  // 旧エンドポイント /o/oauth2/auth は停止が進んでおり、
+  // 使うと 400 invalid_request になる。現行は v2。
+  'https://accounts.google.com/o/oauth2/v2/auth?' +
   new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: REDIRECT,
@@ -129,6 +141,45 @@ const authUrl =
     code_challenge: challenge,
     code_challenge_method: 'S256',
   });
+
+// ブラウザを開く前に、Google がこのリクエストを受け付けるか確かめる。
+// 受け付けない場合、ブラウザ側では「アクセスをブロック」としか出ず理由が分からない。
+const preflight = await fetch(authUrl, { redirect: 'follow' }).catch(() => null);
+if (preflight) {
+  const text = await preflight.text().catch(() => '');
+  if (/loopback flow has been blocked/i.test(text)) {
+    console.error(`
+Google にリクエストを拒否されました。
+
+  理由: ループバック方式（http://127.0.0.1 に戻す方式）が Google 側で遮断されています
+
+これは「デスクトップ アプリ」種別のクライアントでは回避できません。
+**「ウェブ アプリケーション」種別で作り直してください。**
+
+  1. Google Cloud Console →「APIs とサービス」→「認証情報」
+  2.「認証情報を作成」→「OAuth クライアント ID」
+  3. 種類: ウェブ アプリケーション
+  4. 承認済みのリダイレクト URI に次を追加:  ${REDIRECT}
+  5. 作成後、行のダウンロードボタン（↓）で JSON を落とす
+  6. その JSON を指定して、もう一度このコマンドを実行
+
+ウェブ アプリケーション種別には、明示的に登録したリダイレクト URI が使えます。
+クライアント シークレットも発行されるので、そのまま使えます。`);
+    process.exit(1);
+  }
+  if (/signin\/oauth\/error/.test(preflight.url) || /Access blocked/i.test(text)) {
+    const reason = (text.match(/Error 400: \w+\s*(.{0,200}?)\s*Request details/) || [])[1];
+    console.error(`
+Google にリクエストを拒否されました。
+${reason ? `  理由: ${reason}` : '  理由は取得できませんでした。'}
+
+確認すること:
+  - Chrome Web Store API が有効になっているか
+  - OAuth 同意画面のテストユーザーに、使う Google アカウントが入っているか
+  - リダイレクト URI に ${REDIRECT} が登録されているか（ウェブ アプリケーション種別の場合）`);
+    process.exit(1);
+  }
+}
 
 console.log('ブラウザで次の URL を開いて、許可してください:\n');
 console.log(authUrl + '\n');
@@ -147,7 +198,7 @@ const code = await new Promise((resolve, reject) => {
     server.close();
     c ? resolve(c) : reject(new Error(err || 'コードを受け取れませんでした'));
   });
-  server.listen(PORT);
+  server.listen(PORT, '127.0.0.1');
   setTimeout(() => { server.close(); reject(new Error('5 分待っても応答がありませんでした')); }, 300000);
 });
 
@@ -168,8 +219,14 @@ const res = await fetch('https://oauth2.googleapis.com/token', {
 
 const json = await res.json();
 if (!json.refresh_token) {
-  console.error('リフレッシュトークンを取得できませんでした:', json.error || json);
-  console.error('（一度許可済みの場合は、Google アカウントの「サードパーティ アクセス」から解除してやり直してください）');
+  console.error('\nリフレッシュトークンを取得できませんでした。');
+  console.error('  エラー:', json.error || '(不明)', json.error_description || '');
+  console.error(`
+よくある原因:
+  - すでに一度許可している
+    → Google アカウントの「サードパーティ アクセス」から解除してやり直す
+  - OAuth 同意画面のスコープに Chrome Web Store API が入っていない
+  - Chrome Web Store API が有効になっていない`);
   process.exit(1);
 }
 
