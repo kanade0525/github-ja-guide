@@ -42,12 +42,15 @@ function fail(message) {
 }
 
 async function getAccessToken() {
-  const body = new URLSearchParams({
+  // 「デスクトップ アプリ」種別のクライアントにはシークレットが無い（公開クライアント）。
+  // その場合は client_secret を送らない。
+  const params = {
     client_id: requireEnv('CWS_CLIENT_ID'),
-    client_secret: requireEnv('CWS_CLIENT_SECRET'),
     refresh_token: requireEnv('CWS_REFRESH_TOKEN'),
     grant_type: 'refresh_token',
-  });
+  };
+  if (process.env.CWS_CLIENT_SECRET) params.client_secret = process.env.CWS_CLIENT_SECRET;
+  const body = new URLSearchParams(params);
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',

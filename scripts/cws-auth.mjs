@@ -10,6 +10,7 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { exec } from 'child_process';
 
 const PORT = 8123;
@@ -39,13 +40,21 @@ function loadCredentials() {
     }
     // ダウンロードした JSON は web か installed のどちらかに入っている
     const c = json.web || json.installed || json;
-    if (!c.client_id || !c.client_secret) {
+    if (!c.client_id) {
       console.error(
-        `この JSON には client_id / client_secret が入っていません。\n` +
+        `この JSON には client_id が入っていません。\n` +
         `Google Cloud Console の「認証情報」で、OAuth 2.0 クライアント ID の行にある\n` +
         `ダウンロードボタンから落とした JSON を指定してください。`
       );
       process.exit(1);
+    }
+
+    // 「デスクトップ アプリ」種別は、いまはシークレットが発行されない（公開クライアント）。
+    // その場合は PKCE で認可する。シークレットの管理がそもそも要らなくなる。
+    const kind = json.installed ? 'デスクトップ アプリ' : 'ウェブ アプリケーション';
+    console.log(`認証情報を読み込みました: ${path.basename(full)}（${kind}）`);
+    if (!c.client_secret) {
+      console.log('クライアント シークレットなし → PKCE で認可します（シークレットは不要です）');
     }
 
     const uris = c.redirect_uris || [];
@@ -56,12 +65,11 @@ function loadCredentials() {
         `      このまま進めると redirect_uri_mismatch で失敗します。\n`
       );
     }
-    console.log(`認証情報を読み込みました: ${path.basename(full)}`);
-    return { id: c.client_id, secret: c.client_secret };
+    return { id: c.client_id, secret: c.client_secret || null };
   }
 
-  if (process.env.CWS_CLIENT_ID && process.env.CWS_CLIENT_SECRET) {
-    return { id: process.env.CWS_CLIENT_ID, secret: process.env.CWS_CLIENT_SECRET };
+  if (process.env.CWS_CLIENT_ID) {
+    return { id: process.env.CWS_CLIENT_ID, secret: process.env.CWS_CLIENT_SECRET || null };
   }
 
   console.error(`認証情報がありません。次のどちらかで渡してください。
@@ -72,19 +80,19 @@ function loadCredentials() {
   2) 環境変数で渡す
      CWS_CLIENT_ID=xxx CWS_CLIENT_SECRET=yyy npm run cws:auth
 
-クライアント シークレットが分からない場合:
-  Google Cloud Console →「APIs とサービス」→「認証情報」
-  →「OAuth 2.0 クライアント ID」の一覧で、作ったクライアントの行の
-    ダウンロードボタン（↓）を押すと JSON が落ちます。
-    クライアント名をクリックすると、画面右側にも表示されます。
+種類は「デスクトップ アプリ」でも「ウェブ アプリケーション」でも構いません。
+  デスクトップ アプリ  : シークレットは発行されません。PKCE で認可するので不要です
+  ウェブ アプリケーション: 承認済みリダイレクト URI に ${REDIRECT} の登録が必要です
 
-種類は「ウェブ アプリケーション」、
-承認済みリダイレクト URI に ${REDIRECT} を登録してください。
 詳しい手順は docs/RELEASE.md にあります。`);
   process.exit(1);
 }
 
 const { id: CLIENT_ID, secret: CLIENT_SECRET } = loadCredentials();
+
+// PKCE: 認可コードを盗まれても、対になる verifier がないと交換できないようにする
+const verifier = crypto.randomBytes(48).toString('base64url');
+const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
 
 const authUrl =
   'https://accounts.google.com/o/oauth2/auth?' +
@@ -95,6 +103,8 @@ const authUrl =
     scope: SCOPE,
     access_type: 'offline',
     prompt: 'consent', // 毎回 refresh_token を返させる
+    code_challenge: challenge,
+    code_challenge_method: 'S256',
   });
 
 console.log('ブラウザで次の URL を開いて、許可してください:\n');
@@ -118,16 +128,19 @@ const code = await new Promise((resolve, reject) => {
   setTimeout(() => { server.close(); reject(new Error('5 分待っても応答がありませんでした')); }, 300000);
 });
 
+const params = {
+  client_id: CLIENT_ID,
+  code,
+  grant_type: 'authorization_code',
+  redirect_uri: REDIRECT,
+  code_verifier: verifier,
+};
+if (CLIENT_SECRET) params.client_secret = CLIENT_SECRET;
+
 const res = await fetch('https://oauth2.googleapis.com/token', {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    code,
-    grant_type: 'authorization_code',
-    redirect_uri: REDIRECT,
-  }),
+  body: new URLSearchParams(params),
 });
 
 const json = await res.json();
@@ -140,9 +153,12 @@ if (!json.refresh_token) {
 console.log('\n=============================================');
 console.log('CWS_REFRESH_TOKEN=' + json.refresh_token);
 console.log('=============================================\n');
-console.log(`この値は GitHub の Settings → Secrets and variables → Actions に
-CWS_REFRESH_TOKEN という名前で登録してください。
+console.log(`GitHub の Settings → Secrets and variables → Actions に登録してください。
 
+  CWS_CLIENT_ID     ${CLIENT_ID}
+  CWS_REFRESH_TOKEN 上の値
+  CWS_EXTENSION_ID  ストアの拡張機能 ID（32文字）
+${CLIENT_SECRET ? '  CWS_CLIENT_SECRET このクライアントのシークレット\n' : '  CWS_CLIENT_SECRET は不要です（シークレットのないクライアントのため）\n'}
   - リポジトリにコミットしない
   - チャットや外部サービスに貼らない
   - OAuth 同意画面が「テスト」状態のままだと 7 日で失効します。
