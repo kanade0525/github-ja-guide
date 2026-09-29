@@ -1,0 +1,72 @@
+/* GitHub やさしく日本語 — ページに注入するスタイル
+   色は GitHub の CSS 変数を借りるため、ライト/ダークに自動で追従する。 */
+
+:root {
+  --ghja-font-scale: 85%;
+  --ghja-opacity: 0.75;
+}
+
+.ghja {
+  /* 元のレイアウトを壊さないよう inline のまま包む */
+  display: inline;
+}
+
+.ghja-ja {
+  margin-left: 0.35em;
+  font-size: var(--ghja-font-scale, 85%);
+  font-weight: 400;
+  white-space: nowrap;
+  opacity: var(--ghja-opacity, 0.75);
+  /* 色は周囲から受け継ぐ。固定色にすると、緑のボタンの上など
+     背景が濃い場所で読めなくなる。濃さは opacity で落とす。 */
+  color: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}
+
+.ghja--has-tip {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.ghja-tip {
+  position: fixed;
+  display: none;
+  z-index: 2147483647;
+  max-width: 320px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #24292f;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: left;
+  white-space: normal;
+  word-wrap: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}
+
+.ghja-tip.is-visible {
+  display: block;
+}
+
+.ghja-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #24292f;
+}
+
+.ghja-tip.is-below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #24292f;
+}

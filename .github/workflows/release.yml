@@ -1,0 +1,121 @@
+name: Release
+
+# タグを打つと「下書きのアップロード」までを自動でやる。
+# 公開（= 全ユーザーに配布）は取り消せないので、必ず手動実行 + 確認文字の入力を要求する。
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 実行する操作
+        required: true
+        default: upload
+        type: choice
+        options: [upload, publish-testers, publish]
+      confirm:
+        description: publish を選んだ場合のみ、PUBLISH と入力してください
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: 検証
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - run: npm run pack
+      - name: バージョンの一致を確認
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          MAN=$(node -p "require('./manifest.json').version")
+          echo "package.json=$PKG manifest.json=$MAN"
+          test "$PKG" = "$MAN" || { echo "バージョンが揃っていません"; exit 1; }
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            test "v$PKG" = "${GITHUB_REF_NAME}" || { echo "タグ ${GITHUB_REF_NAME} と version $PKG が一致しません"; exit 1; }
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist.zip
+
+  github-release:
+    name: GitHub リリースを作る
+    needs: verify
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist.zip
+          generate_release_notes: true
+
+  cws-upload:
+    name: ストアに下書きとしてアップロード
+    needs: verify
+    if: github.ref_type == 'tag' || github.event.inputs.action != ''
+    runs-on: ubuntu-latest
+    environment: chrome-web-store
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+      - name: アップロード
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: node scripts/cws.mjs upload
+
+  cws-publish:
+    name: ストアで公開する
+    needs: cws-upload
+    # 手動実行 + publish を選択 + 確認文字が一致したときだけ動く
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      (
+        github.event.inputs.action == 'publish-testers' ||
+        (github.event.inputs.action == 'publish' && github.event.inputs.confirm == 'PUBLISH')
+      )
+    runs-on: ubuntu-latest
+    environment: chrome-web-store-publish
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 公開
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+        run: |
+          if [ "${{ github.event.inputs.action }}" = "publish-testers" ]; then
+            node scripts/cws.mjs publish --testers --yes
+          else
+            node scripts/cws.mjs publish --yes
+          fi

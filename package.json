@@ -1,0 +1,29 @@
+{
+  "name": "github-ja-guide",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npx playwright test",
+    "pack": "rm -f dist.zip && npm run build && zip -r dist.zip manifest.json content.js styles.css popup.html popup.js popup.css options.html options.js options.css icons/",
+    "version": "node scripts/set-version.mjs",
+    "icons": "node scripts/generate-icons.js",
+    "cws:auth": "node scripts/cws-auth.mjs",
+    "cws:status": "node scripts/cws.mjs status",
+    "cws:upload": "node scripts/cws.mjs upload",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.58.2",
+    "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^10.0.2",
+    "rollup": "^4.0.0",
+    "vitest": "^3.0.0"
+  }
+}

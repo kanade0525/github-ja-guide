@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GitHub mock for e2e</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; margin: 20px; }
+    nav a { margin-right: 16px; }
+    .markdown-body { border: 1px solid #ccc; padding: 12px; margin-top: 20px; }
+    pre { background: #f6f8fa; padding: 8px; }
+  </style>
+</head>
+<body>
+  <!-- グローバルナビ -->
+  <header id="global-nav">
+    <nav>
+      <a href="/pulls" id="nav-pulls"><span>Pull requests</span></a>
+      <a href="/issues" id="nav-issues"><span>Issues</span></a>
+      <a href="/explore" id="nav-explore"><span>Explore</span></a>
+    </nav>
+  </header>
+
+  <!-- リポジトリのタブ -->
+  <nav id="repo-tabs">
+    <a href="#" id="tab-code"><span>Code</span></a>
+    <a href="#" id="tab-issues"><span>Issues</span></a>
+    <a href="#" id="tab-pulls"><span>Pull requests</span></a>
+    <a href="#" id="tab-actions"><span>Actions</span></a>
+    <a href="#" id="tab-settings"><span>Settings</span></a>
+  </nav>
+
+  <!-- リポジトリの操作ボタン -->
+  <div id="repo-actions">
+    <button id="btn-fork">Fork</button>
+    <button id="btn-star">Star</button>
+    <button id="btn-watch">Watch</button>
+    <span id="fork-note">Forked from octocat/hello</span>
+  </div>
+
+  <!-- PR 画面 -->
+  <div id="pr-view">
+    <a href="#" id="pr-tab-conversation"><span>Conversation</span></a>
+    <a href="#" id="pr-tab-files"><span>Files changed</span></a>
+    <button id="btn-squash">Squash and merge</button>
+    <div id="sidebar">
+      <h3 id="side-reviewers">Reviewers</h3>
+      <h3 id="side-labels">Labels</h3>
+    </div>
+  </div>
+
+  <!-- 本文。ここにあるものには一切注釈が付いてはいけない -->
+  <div class="markdown-body" id="readme">
+    <p id="body-sentence">このプロジェクトを Fork して自由に使ってください。</p>
+    <p id="body-exact">Fork</p>
+    <p id="body-exact2">Pull requests</p>
+    <pre><code id="code-merge">Merge</code></pre>
+  </div>
+
+  <!-- 検索・フィルタ欄。GitHub は <input> ではなく role 付きのウィジェットで作っている -->
+  <form role="search" id="search-form">
+    <div role="combobox" id="query-box">
+      <span>is:pr state:</span><span id="query-open">Open</span>
+    </div>
+  </form>
+  <div role="textbox" contenteditable="true" id="rich-comment"><span id="rich-fork">Fork</span></div>
+
+  <!-- 入力欄 -->
+  <textarea id="comment-box">Fork</textarea>
+  <input id="title-input" value="Issues">
+
+  <!-- SPA で後から差し込まれる領域 -->
+  <div id="spa-target"></div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build files
+dist/
+build/
+*.zip
+
+# Rollup build output (source is in src/)
+/content.js
+
+# 生成物（npm run screenshots / npm run pack で作り直せる）
+store-assets/
+dist.zip
+
+# Playwright & Coverage
+test-results/
+coverage/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.claude/settings.local.json

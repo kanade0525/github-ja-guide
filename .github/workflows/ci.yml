@@ -1,0 +1,176 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run --coverage --reporter=json --reporter=default --outputFile=test-results/unit-results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: |
+            test-results/unit-results.json
+            coverage/coverage-summary.json
+
+  e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: test-results/e2e-results.json
+
+  report:
+    runs-on: ubuntu-latest
+    needs: [unit-test, e2e-test]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // --- Parse unit test results ---
+            let unitPassed = 0, unitFailed = 0, unitTotal = 0;
+            try {
+              const unitData = JSON.parse(fs.readFileSync('artifacts/unit-test-results/test-results/unit-results.json', 'utf8'));
+              unitPassed = unitData.numPassedTests || 0;
+              unitFailed = unitData.numFailedTests || 0;
+              unitTotal = unitData.numTotalTests || 0;
+            } catch (e) {
+              console.log('Unit test results not found:', e.message);
+            }
+
+            // --- Parse coverage ---
+            let covStmt = '-', covBranch = '-', covFunc = '-', covLines = '-';
+            try {
+              const covData = JSON.parse(fs.readFileSync('artifacts/unit-test-results/coverage/coverage-summary.json', 'utf8'));
+              const t = covData.total;
+              covStmt = t.statements.pct + '%';
+              covBranch = t.branches.pct + '%';
+              covFunc = t.functions.pct + '%';
+              covLines = t.lines.pct + '%';
+            } catch (e) {
+              console.log('Coverage data not found:', e.message);
+            }
+
+            // --- Parse E2E test results ---
+            let e2ePassed = 0, e2eFailed = 0, e2eTotal = 0;
+            try {
+              const e2eData = JSON.parse(fs.readFileSync('artifacts/e2e-test-results/e2e-results.json', 'utf8'));
+              function countTests(suites) {
+                for (const suite of suites) {
+                  for (const spec of suite.specs || []) {
+                    for (const test of spec.tests || []) {
+                      e2eTotal++;
+                      if (test.status === 'expected') e2ePassed++;
+                      else e2eFailed++;
+                    }
+                  }
+                  countTests(suite.suites || []);
+                }
+              }
+              countTests(e2eData.suites || []);
+            } catch (e) {
+              console.log('E2E test results not found:', e.message);
+            }
+
+            const label = (failed, total) => failed > 0 ? '失敗' : (total > 0 ? '成功' : '未実行');
+            const unitIcon = label(unitFailed, unitTotal);
+            const e2eIcon = label(e2eFailed, e2eTotal);
+
+            const body = [
+              '## テスト結果レポート',
+              '',
+              '| 種別 | 結果 | テスト |',
+              '|------|------|--------|',
+              `| Unit | ${unitIcon} | ${unitPassed} / ${unitTotal} passed |`,
+              `| E2E | ${e2eIcon} | ${e2ePassed} / ${e2eTotal} passed |`,
+              '',
+              '### カバレッジ (Unit)',
+              '',
+              '| Statements | Branches | Functions | Lines |',
+              '|------------|----------|-----------|-------|',
+              `| ${covStmt} | ${covBranch} | ${covFunc} | ${covLines} |`,
+              '',
+              '---',
+              '*自動生成 by GitHub Actions*',
+            ].join('\n');
+
+            // Delete old comments
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            for (const comment of comments) {
+              if (comment.body.includes('## テスト結果レポート')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+
+            // Post new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, unit-test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build

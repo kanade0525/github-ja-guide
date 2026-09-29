@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub やさしく日本語 の設定</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>GitHub やさしく日本語 の設定</h1>
+
+    <section>
+      <h2>見た目</h2>
+
+      <div class="field">
+        <label for="fontScale">日本語部分の大きさ</label>
+        <div class="slider-row">
+          <input type="range" id="fontScale" min="60" max="120" step="5">
+          <output id="fontScaleOut"></output>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="opacity">日本語部分の濃さ</label>
+        <div class="slider-row">
+          <input type="range" id="opacity" min="40" max="100" step="5">
+          <output id="opacityOut"></output>
+        </div>
+      </div>
+
+      <div class="preview">
+        <span class="preview__label">プレビュー</span>
+        <span class="preview__sample">Pull requests<span class="preview__ja" id="previewJa">変更の取り込み依頼</span></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>表示しないページ</h2>
+      <p class="hint">URL にこの文字が含まれるページでは補足を出しません。例: <code>settings</code></p>
+
+      <div class="input-group">
+        <input type="text" id="pathInput" placeholder="settings" autocomplete="off">
+        <button type="button" id="addPath" class="btn">追加</button>
+      </div>
+
+      <ul id="pathList" class="path-list"></ul>
+      <p class="hint" id="pathEmpty">まだ指定はありません。</p>
+    </section>
+
+    <div class="save-bar">
+      <button type="button" id="save" class="btn btn--primary">設定を保存</button>
+      <span id="saveStatus" class="save-status" role="status"></span>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
