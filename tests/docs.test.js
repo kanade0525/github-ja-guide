@@ -51,10 +51,15 @@ describe('ストアの掲載文面', () => {
     expect(guide).toContain('https://github.com/kanade0525/github-ja-guide');
   });
 
+  // 言い回しは書き直すことがあるので、固定の文ではなく「触れているか」で見る。
+  // 固定文で縛ると、文章を直すたびにテストが落ちて、文章のほうを硬くしてしまう。
   it('詳細説明が権限とプライバシーに触れている', () => {
-    for (const phrase of ['storage', '外部サーバーとの通信は一切ありません', 'github.com 上だけ']) {
-      expect(guide, `掲載文面に「${phrase}」が無い`).toContain(phrase);
-    }
+    expect(guide, '権限（storage）への言及が無い').toContain('storage');
+    expect(guide, '動作範囲（github.com）への言及が無い').toContain('github.com');
+    expect(guide, '外部通信をしないことへの言及が無い').toMatch(
+      /外部との通信は(ありません|しません)|外部(へ)?の?送信(は)?(一切)?(ありません|しません|なし)|通信は(一切)?しません/
+    );
+    expect(guide, '翻訳 API を使わないことへの言及が無い').toMatch(/翻訳 ?API/);
   });
 });
 

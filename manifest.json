@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "非エンジニアのための GitHub 用語ガイド",
   "version": "0.2.0",
-  "description": "英語のラベルはそのままに、横に日本語の意味を添えます。Pull requests なら「変更の取り込み依頼」。208 語に対応、外部送信なし。",
+  "description": "英語のラベルは消さずに、意味だけ横へ添えます。Pull requests なら「変更の取り込み依頼」。208 語を収録。通信は一切しません。",
   "permissions": [
     "storage"
   ],
