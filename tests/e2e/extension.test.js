@@ -225,6 +225,17 @@ test.describe('Issue の依頼支援', () => {
     expect(body).toContain('## 手順');
   });
 
+  test('入れた雛形に、投稿後は消える案内が付いている', async () => {
+    await page.locator('#ghja-issue-helper .ghja-panel__btn').first().click();
+    const body = await page.locator('textarea[name="issue[body]"]').inputValue();
+    // 書いている間だけ見える案内（投稿すると見えなくなる形式）
+    expect(body).toContain('<!--');
+    expect(body).toContain('-->');
+    expect(body).toContain('例）');
+    // 案内がそのまま投稿に残る書き方になっていないこと
+    expect(body).not.toMatch(/^（.*してください）$/m);
+  });
+
   test('すでに書いた内容を消さない', async () => {
     await page.fill('textarea[name="issue[body]"]', '先に書いたメモ');
     await page.locator('#ghja-issue-helper .ghja-panel__btn').nth(1).click();

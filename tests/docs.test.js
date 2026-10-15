@@ -193,15 +193,51 @@ describe('Issue テンプレート', () => {
     );
     expect(names).toEqual(labels);
   });
+
+  it('案内は投稿後に見えなくなる形（HTMLコメント）で書かれている', async () => {
+    const { CONCEPTS } = await import('../src/concepts.js');
+    for (const t of CONCEPTS.find((c) => c.id === 'issue').templates) {
+      // 「（〜してください）」のような素の案内は、投稿にそのまま残ってしまう
+      expect(t.body, `${t.file} に素の案内が残っている`).not.toMatch(/^（.*してください）$/m);
+      expect(t.body, `${t.file} に案内のコメントが無い`).toContain('<!--');
+      // 開いたコメントは必ず閉じる
+      const open = (t.body.match(/<!--/g) || []).length;
+      const close = (t.body.match(/-->/g) || []).length;
+      expect(open, `${t.file} のコメントが閉じていない`).toBe(close);
+    }
+  });
+
+  it('例文が特定の業務に寄っていない', async () => {
+    const { CONCEPTS } = await import('../src/concepts.js');
+    // この雛形は利用者のあらゆるリポジトリで出るので、社内固有の題材は使わない
+    const specific = ['寄附', '寄付', 'ふるさと納税', '管理画面'];
+    for (const t of CONCEPTS.find((c) => c.id === 'issue').templates) {
+      for (const word of specific) {
+        expect(t.body, `${t.file} に「${word}」が入っている`).not.toContain(word);
+      }
+    }
+  });
 });
 
 describe('生成しているドキュメント', () => {
   it('docs/ISSUE_WRITING.md が src/concepts.js と一致している', async () => {
-    const { render, OUT } = await import('../scripts/gen-issue-writing.mjs');
+    const { render, OUT } = await import('../scripts/gen-docs.mjs');
     expect(fs.existsSync(OUT), 'docs/ISSUE_WRITING.md が無い').toBe(true);
     expect(
       fs.readFileSync(OUT, 'utf8'),
       'src/concepts.js を直したあと npm run gen:docs を実行していない'
     ).toBe(render());
+  });
+
+  it('.github/ISSUE_TEMPLATE/*.md が src/concepts.js と一致している', async () => {
+    const { renderTemplate, issueConcept, TEMPLATE_DIR } = await import('../scripts/gen-docs.mjs');
+    for (const t of issueConcept().templates) {
+      const file = path.join(TEMPLATE_DIR, t.file);
+      expect(fs.existsSync(file), `${t.file} が無い`).toBe(true);
+      expect(
+        fs.readFileSync(file, 'utf8'),
+        `${t.file} が古い。npm run gen:docs を実行してください`
+      ).toBe(renderTemplate(t));
+    }
   });
 });

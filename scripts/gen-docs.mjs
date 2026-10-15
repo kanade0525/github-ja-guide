@@ -1,8 +1,11 @@
-// docs/ISSUE_WRITING.md を src/concepts.js から生成する。
+// src/concepts.js から、Issue まわりの文書を生成する。
 //   npm run gen:docs
 //
-// 同じ内容が「拡張機能のガイドページ」「Issue 画面の案内」「この手引き」の
-// 3 か所に出る。手で書き分けると必ずずれるので、出どころを 1 つにする。
+//   docs/ISSUE_WRITING.md          読み物（Issue 作成画面からリンクしている）
+//   .github/ISSUE_TEMPLATE/*.md    このリポジトリの Issue 雛形
+//
+// 同じ雛形が「拡張機能が差し込むもの」「このリポジトリの Issue 画面」
+// 「読み物」の 3 か所に出る。手で書き分けると必ずずれるので出どころを 1 つにする。
 
 import fs from 'fs';
 import path from 'path';
@@ -10,6 +13,33 @@ import { CONCEPTS } from '../src/concepts.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 export const OUT = path.join(ROOT, 'docs', 'ISSUE_WRITING.md');
+export const TEMPLATE_DIR = path.join(ROOT, '.github', 'ISSUE_TEMPLATE');
+
+export function issueConcept() {
+  const c = CONCEPTS.find((x) => x.id === 'issue');
+  if (!c) throw new Error('concepts.js に issue の項目がありません');
+  return c;
+}
+
+/** GitHub の Issue 雛形（front matter + 案内 + 本文） */
+export function renderTemplate(t) {
+  return [
+    '---',
+    `name: ${t.label}`,
+    `about: ${t.about}`,
+    "title: ''",
+    `labels: ${t.labels}`,
+    "assignees: ''",
+    '---',
+    '',
+    '<!--',
+    ...t.intro.map((line) => (line ? `  ${line}` : '')),
+    '-->',
+    '',
+    t.body.trimEnd(),
+    '',
+  ].join('\n');
+}
 
 export function render() {
 const issue = CONCEPTS.find((c) => c.id === 'issue');
@@ -59,9 +89,16 @@ for (const t of issue.templates || []) {
 return lines.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
-// 直接実行されたときだけ書き出す（テストからは render() だけを使う）
+// 直接実行されたときだけ書き出す（テストからは render 系だけを使う）
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
   const text = render();
   fs.writeFileSync(OUT, text);
-  console.log(`生成しました: docs/ISSUE_WRITING.md（${text.split('\n').length} 行）`);
+  console.log(`生成: docs/ISSUE_WRITING.md（${text.split('\n').length} 行）`);
+
+  fs.mkdirSync(TEMPLATE_DIR, { recursive: true });
+  for (const t of issueConcept().templates) {
+    const file = path.join(TEMPLATE_DIR, t.file);
+    fs.writeFileSync(file, renderTemplate(t));
+    console.log(`生成: .github/ISSUE_TEMPLATE/${t.file}`);
+  }
 }
