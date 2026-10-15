@@ -17,7 +17,8 @@
     "cws:status": "node scripts/cws.mjs status",
     "cws:upload": "node scripts/cws.mjs upload",
     "screenshots": "node scripts/store-images.mjs",
-    "images": "node scripts/readme-images.mjs"
+    "images": "node scripts/readme-images.mjs",
+    "gen:docs": "node scripts/gen-issue-writing.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

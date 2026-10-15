@@ -160,3 +160,48 @@ describe('README の画像', () => {
     }
   });
 });
+
+// Issue テンプレートは、GitHub の Issue 作成画面に出る入口。
+// ここが壊れていると、報告しようとした人が最初に 404 を踏む。
+describe('Issue テンプレート', () => {
+  const dir = path.join(root, '.github', 'ISSUE_TEMPLATE');
+
+  it('雛形が 3 種類そろっている', () => {
+    for (const file of ['bug_report.md', 'feature_request.md', 'question.md']) {
+      expect(fs.existsSync(path.join(dir, file)), `${file} が無い`).toBe(true);
+    }
+  });
+
+  it('config.yml から張ったリポジトリ内のリンクが実在する', () => {
+    const config = read('.github/ISSUE_TEMPLATE/config.yml');
+    const urls = [...config.matchAll(/url:\s*(\S+)/g)].map((m) => m[1]);
+    expect(urls.length, 'contact_links が 1 つも無い').toBeGreaterThan(0);
+
+    for (const url of urls) {
+      // 自分のリポジトリを指す URL は、ファイルが実在するか確かめる
+      const m = url.match(/github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/(.+)$/);
+      if (!m) continue;
+      expect(fs.existsSync(path.join(root, m[1])), `${m[1]} が見つからない（${url}）`).toBe(true);
+    }
+  });
+
+  it('雛形の見出しが拡張機能のものと揃っている', async () => {
+    const { CONCEPTS } = await import('../src/concepts.js');
+    const labels = CONCEPTS.find((c) => c.id === 'issue').templates.map((t) => t.label);
+    const names = ['bug_report.md', 'feature_request.md', 'question.md'].map(
+      (f) => read(`.github/ISSUE_TEMPLATE/${f}`).match(/^name:\s*(.+)$/m)?.[1].trim()
+    );
+    expect(names).toEqual(labels);
+  });
+});
+
+describe('生成しているドキュメント', () => {
+  it('docs/ISSUE_WRITING.md が src/concepts.js と一致している', async () => {
+    const { render, OUT } = await import('../scripts/gen-issue-writing.mjs');
+    expect(fs.existsSync(OUT), 'docs/ISSUE_WRITING.md が無い').toBe(true);
+    expect(
+      fs.readFileSync(OUT, 'utf8'),
+      'src/concepts.js を直したあと npm run gen:docs を実行していない'
+    ).toBe(render());
+  });
+});

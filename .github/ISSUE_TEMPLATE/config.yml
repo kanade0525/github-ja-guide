@@ -1,0 +1,9 @@
+# 空の Issue を選べないようにしている。
+# 「何を書けばよいか分からない」が今いちばんの詰まりどころなので、
+# まっさらな入力欄ではなく、必ず案内付きの雛形から始まるようにする。
+blank_issues_enabled: false
+
+contact_links:
+  - name: 伝わる依頼の書き方（読み物）
+    url: https://github.com/kanade0525/github-ja-guide/blob/main/docs/ISSUE_WRITING.md
+    about: 良い例・直したい例を並べた短い手引きです。迷ったらこちらを先に。
