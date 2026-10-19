@@ -17,6 +17,11 @@ const MAX_LABEL_LENGTH = 40;
 let options = { ...DEFAULTS };
 let observer = null;
 let pendingScan = null;
+// 次の走査で見にいく要素。コールバックをまたいで貯める。
+// ここをコールバックごとのローカル変数にすると、デバウンスで打ち消すたびに
+// 前の回に見つけた要素が捨てられ、取りこぼす（GitHub は読み込み中ずっと
+// 書き換え続けるので、ナビのように早く挿入されるものが毎回消えていた）。
+let pendingRoots = new Set();
 let sharedTooltip = null;
 const settledListeners = [];
 
@@ -177,28 +182,32 @@ export function setupMutationObserver() {
   if (observer) return;
 
   observer = new MutationObserver((mutations) => {
-    const roots = [];
     for (const mutation of mutations) {
       for (const added of mutation.addedNodes) {
         if (added.nodeType !== Node.ELEMENT_NODE) continue;
         // 自分が差し込んだものには反応しない（無限ループ防止）
         if (added.classList && added.classList.contains(WRAPPER_CLASS)) continue;
         if (added.closest && added.closest(`.${WRAPPER_CLASS}, .${TOOLTIP_CLASS}`)) continue;
-        roots.push(added);
+        pendingRoots.add(added);
       }
     }
-    if (roots.length === 0) return;
+    if (pendingRoots.size === 0) return;
 
     clearTimeout(pendingScan);
-    pendingScan = setTimeout(() => {
-      for (const root of roots) {
-        if (root.isConnected) annotate(root);
-      }
-      for (const listener of settledListeners) listener();
-    }, 100);
+    pendingScan = setTimeout(flushPendingRoots, 100);
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+function flushPendingRoots() {
+  const roots = [...pendingRoots];
+  pendingRoots.clear();
+  for (const root of roots) {
+    // 入れ替えで画面から外れたものは見にいかない
+    if (root.isConnected) annotate(root);
+  }
+  for (const listener of settledListeners) listener();
 }
 
 export function stopMutationObserver() {
@@ -206,6 +215,7 @@ export function stopMutationObserver() {
   observer.disconnect();
   observer = null;
   clearTimeout(pendingScan);
+  pendingRoots.clear();
   settledListeners.length = 0;
 }
 

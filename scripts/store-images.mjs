@@ -189,29 +189,65 @@ shots.push({
   }),
 });
 
-// ---- 4. ダークモード ----
-await open(REPO, { dark: true });
-shots.push({
-  name: '04-dark',
-  headline: 'ダークモードでも読みやすく。',
-  sub: '色は周囲から受け継ぐので、どんな配色にもなじみます。',
-  raw: await capture('04'),
-  region: await regionOfLabels(['Code', 'Issues', 'Pull requests', 'Actions'], {
-    grow: { top: 60, bottom: 76, left: 24 },
-    maxWidth: 770,
-    maxHeight: 230,
-  }),
-  dark: true,
-});
-
 await ctx.close();
+
+// ---- 4. Issue を書く画面の雛形 / 5. 考え方ガイド ----
+// 実際の /issues/new はログインが要るので、模擬ページに拡張機能を注入して撮る。
+// 写すのは自分たちが差し込んだパネルそのものなので、見せ方として不正確ではない。
+{
+  const stub = `
+    const store = { enabled:true, showInline:true, showTooltip:true, fontScale:85, opacity:75, excludedPaths:[] };
+    const get = (d, cb) => { const r = { ...d, ...store }; if (typeof cb === 'function') { cb(r); return; } return Promise.resolve(r); };
+    const set = (v, cb) => { Object.assign(store, v); if (typeof cb === 'function') { cb(); return; } return Promise.resolve(); };
+    window.chrome = { storage: { sync: { get, set } }, runtime: { getURL: (p) => p, openOptionsPage(){} }, tabs: { create(){} } };
+  `;
+  const browser = await chromium.launch();
+
+  const panelPage = await browser.newPage({ viewport: { width: 880, height: 520 }, deviceScaleFactor: 2 });
+  await panelPage.addInitScript(stub);
+  await panelPage.goto(`file://${path.join(ROOT, 'tests/fixtures/issues/new/index.html')}`);
+  await panelPage.addStyleTag({ path: path.join(ROOT, 'styles.css') });
+  await panelPage.addScriptTag({ path: path.join(ROOT, 'content.js') });
+  await panelPage.waitForSelector('#ghja-issue-helper');
+  await panelPage.waitForTimeout(400);
+  const panel = panelPage.locator('#ghja-issue-helper');
+  const box = await panel.boundingBox();
+  const panelFile = path.join(TMP, 'panel.png');
+  fs.writeFileSync(panelFile, await panel.screenshot());
+  shots.push({
+    name: '04-issue',
+    headline: '何を書けばいいか、書く場所の上に出ます。',
+    sub: 'バグ報告・要望・質問の雛形を、ボタン 1 つで本文に入れられます。',
+    raw: panelFile,
+    region: { left: 0, top: 0, width: box.width, height: box.height },
+    shotWidth: box.width,
+  });
+  await panelPage.close();
+
+  const guidePage = await browser.newPage({ viewport: { width: 900, height: 560 }, deviceScaleFactor: 2 });
+  await guidePage.goto(`file://${path.join(ROOT, 'guide.html')}`);
+  await guidePage.waitForTimeout(500);
+  const guideFile = path.join(TMP, 'guide.png');
+  fs.writeFileSync(guideFile, await guidePage.screenshot());
+  shots.push({
+    name: '05-guide',
+    headline: '訳すだけでは分からないことは、読み物にしました。',
+    sub: 'Pull request はどれくらいの単位で出すのか。ブランチは何のためにあるのか。',
+    raw: guideFile,
+    region: { left: 0, top: 0, width: 900, height: 560 },
+    shotWidth: 900,
+  });
+  await guidePage.close();
+
+  await browser.close();
+}
 
 // ---- 組み版: 切り出した画面に見出しを付けて 1280x800 に組む ----
 
 const PAD = 56;
 const CARD_TOP = 224;
 
-function compose({ headline, sub, raw, region, dark }) {
+function compose({ headline, sub, raw, region, dark, shotWidth = SHOT.width }) {
   const areaW = CANVAS.width - PAD * 2;
   const areaH = CANVAS.height - CARD_TOP - PAD;
   // 切り出した範囲を、置ける場所いっぱいまで拡大する（縮小はしない）
@@ -220,7 +256,7 @@ function compose({ headline, sub, raw, region, dark }) {
   const cardH = Math.round(region.height * scale);
   const cardX = Math.round(PAD + (areaW - cardW) / 2);
   const cardY = Math.round(CARD_TOP + (areaH - cardH) / 2);
-  const imgW = SHOT.width * scale;
+  const imgW = shotWidth * scale;
   const offX = -region.left * scale;
   const offY = -region.top * scale;
   const data = fs.readFileSync(raw).toString('base64');

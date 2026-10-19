@@ -134,6 +134,30 @@ test('後から差し込まれた要素にも注釈が付く（SPA 対応）', a
   await expect(page.locator('#spa-added .ghja-ja')).toHaveText('締め切りのまとまり');
 });
 
+// GitHub は読み込み中ずっと DOM を書き換え続ける。
+// デバウンスの実装を誤ると、静止が来るまでに見つけた要素が捨てられ、
+// 早い段階で差し込まれるナビなどが毎回取りこぼされる（実際に起きていた）。
+test('書き換えが続いても取りこぼさない', async () => {
+  const words = ['Milestone', 'Assignees', 'Reviewers', 'Workflow', 'Artifacts', 'Collaborators'];
+
+  await page.evaluate(async (list) => {
+    const target = document.getElementById('spa-target');
+    for (const word of list) {
+      const link = document.createElement('a');
+      link.className = 'spa-added';
+      const span = document.createElement('span');
+      span.textContent = word;
+      link.appendChild(span);
+      target.appendChild(link);
+      // デバウンス（100ms）より短い間隔で足し続ける
+      await new Promise((r) => setTimeout(r, 40));
+    }
+  }, words);
+
+  await page.waitForTimeout(900);
+  await expect(page.locator('#spa-target .spa-added .ghja-ja')).toHaveCount(words.length);
+});
+
 test('無効化すると元の DOM に戻る', async () => {
   await page.evaluate(() => window.__ghja.removeAllAnnotations());
   await expect(page.locator('.ghja')).toHaveCount(0);
