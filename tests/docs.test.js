@@ -47,6 +47,32 @@ describe('ストアの掲載文面', () => {
     expect(manifest.description.length).toBeLessThanOrEqual(132);
   });
 
+  // 本文を書き直すとき、前後の節ごと置き換えてしまう事故があった
+  // （グラフィックアセットの節が丸ごと消えていた）。節の構成を固定する。
+  it('提出に必要な節がそろっている', () => {
+    for (const heading of [
+      '## 提出前のチェック',
+      '## 掲載情報',
+      '### 詳細説明',
+      '## グラフィックアセット',
+      '## ホスト権限の警告について',
+      '## プライバシーの申告欄',
+      '## 提出後',
+    ]) {
+      expect(guide, `${heading} が無い`).toContain(heading);
+    }
+  });
+
+  it('掲載する画像が store-assets の生成結果と一致している', () => {
+    const listed = [...guide.matchAll(/`(0\d-[a-z]+\.png)`/g)].map((m) => m[1]);
+    expect(listed.length, '画像の一覧が無い').toBeGreaterThan(0);
+    expect(listed.length, 'ストアに載せられるのは 5 枚まで').toBeLessThanOrEqual(5);
+
+    const script = read('scripts/store-images.mjs');
+    const generated = [...script.matchAll(/name: '(0\d-[a-z]+)'/g)].map((m) => `${m[1]}.png`);
+    expect(listed.sort(), '提出ガイドと生成スクリプトで画像がずれている').toEqual(generated.sort());
+  });
+
   it('詳細説明にソースコードの URL が載っている', () => {
     expect(guide).toContain('https://github.com/kanade0525/github-ja-guide');
   });
